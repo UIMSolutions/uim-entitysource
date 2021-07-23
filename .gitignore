@@ -1,0 +1,15 @@
+.dub
+docs.json
+__dummy.html
+docs/
+/uim-entitydb
+uim-entitydb.so
+uim-entitydb.dylib
+uim-entitydb.dll
+uim-entitydb.a
+uim-entitydb.lib
+uim-entitydb-test-*
+*.exe
+*.o
+*.obj
+*.lst
