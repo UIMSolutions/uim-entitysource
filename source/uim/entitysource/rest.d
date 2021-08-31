@@ -3,7 +3,7 @@ module source.uim.entitysource.rest;
 @safe:
 import uim.entitysource;
 
-class DEDBRestentitysource : DEDBentitysource {
+class DEDBRestentitysource : DESCEntitySource {
   this() { super(); this.separator("/"); }
   this(string newPath) { this().path(newPath); }
   
@@ -11,7 +11,7 @@ class DEDBRestentitysource : DEDBentitysource {
 
   // #region read
   // Searching in store
-  alias findMany = DEDBentitysource.findMany;
+  alias findMany = DESCEntitySource.findMany;
   override Json[] findMany(string collection, bool allVersions = false) {
     // debug writeln("In findMany(", collection, ",", allVersions, ")");
 
@@ -44,17 +44,6 @@ class DEDBRestentitysource : DEDBentitysource {
     if (versions.length > 0) return versions;
     auto lastVersion = uim.oop.repositories.lastVersion(versions);
     return lastVersion != Json(null) ? [lastVersion] : null; }
-  unittest {}
-
-  override Json[] findMany(string collection, UUID id, size_t versionNumber) {
-    // debug writeln("In findMany(", collection, ",", versionNumber, ")");
-
-    auto pathToVersion = path~"/"~collection~"/"~id.toString~"/"~to!string(versionNumber);
-    if (!pathToVersion.exists) {
-      // debug writeln("In findMany: Missing id: ", pathToVersion);
-      return null;
-    }
-    return [loadJson(pathToVersion)]; }
   unittest {}
 
   override Json[] findMany(string collection, STRINGAA select, bool allVersions = false) {
@@ -93,35 +82,31 @@ class DEDBRestentitysource : DEDBentitysource {
 
     return results.filter!(a => checkVersion(a, select)).array; }
 
-  alias findOne = DEDBentitysource.findOne;
+  alias findOne = DESCEntitySource.findOne;
   override Json findOne(string collection, UUID id, bool allVersions = false) {
     // debug writeln("In findOne(", collection, ",", id, ",", allVersions, ")");
     auto jsons = findMany(collection, id, allVersions);
     return jsons.length > 0 ? jsons[0] : Json(null); }
   unittest {
-    writeln((StyledString("Test Json findOne(string collection, UUID id, bool allVersions = false)").setForeground(AnsiColor.black).setBackground(AnsiColor.white)));
-    auto rep = EDBRestentitysource("./tests");
+/*     auto rep = EDBRestentitysource("./tests");
     auto json = rep.findOne("entities", UUID("0a9f35a0-be1f-4f3f-9d03-97bfba36774d"));
     assert(json != Json(null), "Json not found");
-  }    
+ */  }    
 
   override Json findOne(string collection, UUID id, size_t versionNumber) {
     // debug writeln("In findOne(", collection, ",", id, ",", versionNumber, ")");
-    auto jsons = findMany(collection, id, versionNumber);
-    return jsons.length > 0 ? jsons[0] : Json(null); }
-  unittest {
-    writeln((StyledString("Test Json findOne(string collection, UUID id, size_t versionNumber)").setForeground(AnsiColor.black).setBackground(AnsiColor.white)));
+    return Json(null); }
+  unittest {/* 
     auto rep = EDBRestentitysource("./tests");
     auto json = rep.findOne("entities", UUID("0a9f35a0-be1f-4f3f-9d03-97bfba36774d"), 1);
     assert(json != Json(null));
-  }    
+ */  }    
 
   override Json findOne(string collection, STRINGAA select, bool allVersions = false) {
     // debug writeln("In findOne(", collection, ",", select, ",", allVersions, ")");
     auto jsons = findMany(collection, select, allVersions);
     return jsons.length > 0 ? jsons[0] : Json(null); }
   unittest {
-    writeln((StyledString("Test Json findOne(string collection, STRINGAA select, bool allVersions = false)").setForeground(AnsiColor.black).setBackground(AnsiColor.white)));
     auto rep = EDBRestentitysource("./tests");
     auto select = [
       "id": "0a9f35a0-be1f-4f3f-9d03-97bfba36774d", 
@@ -146,7 +131,7 @@ class DEDBRestentitysource : DEDBentitysource {
   // #endregion
 
 // #region create
-  alias insertOne = DEDBentitysource.insertOne;
+  alias insertOne = DESCEntitySource.insertOne;
   override Json insertOne(string collection, Json newData) {
     if (newData == Json(null)) {
       // debug writeln("1: No data");
@@ -168,8 +153,8 @@ class DEDBRestentitysource : DEDBentitysource {
       pathToId.mkdir;
     }
 
-    // debug writeln("In CreateOne/path = ", jsonFilePath(pathToCollection, json));
-    std.file.write(jsonFilePath(pathToCollection, json), json.toString);
+    // debug writeln("In CreateOne/path = ", filePath(pathToCollection, json));
+    std.file.write(filePath(pathToCollection, json), json.toString);
     return findOne(collection, json);
   }  
   unittest {
@@ -182,7 +167,7 @@ class DEDBRestentitysource : DEDBentitysource {
 // #endregion create
 
 // #region UpdateMany
-  alias updateMany = DEDBentitysource.updateMany;
+  alias updateMany = DESCEntitySource.updateMany;
   override size_t updateMany(string collection, Json select, Json updateData) {
     auto pathToCollection = path~"/"~collection;
     if (!pathToCollection.exists) return 0;
@@ -195,18 +180,18 @@ class DEDBRestentitysource : DEDBentitysource {
 
         json[kv.key] = kv.value;
       }
-      std.file.write(jsonFilePath(pathToCollection, json, separator), json.toString);
+      std.file.write(filePath(pathToCollection, json, separator), json.toString);
     }
     return jsons.length;
   }
 
-  alias updateOne = DEDBentitysource.updateOne;
+  alias updateOne = DESCEntitySource.updateOne;
   override bool updateOne(string collection, Json select, Json updateData) {
     return false; }
 // #endregion update
 
 // #region removeMany by entity  
-  alias removeMany = DEDBentitysource.removeMany;
+  alias removeMany = DESCEntitySource.removeMany;
   override size_t removeMany(string collection, UUID id, bool allVersions = false) {
     auto pathToCollection = path~"/"~collection;
     if (!pathToCollection.exists) return 0;
@@ -234,7 +219,7 @@ class DEDBRestentitysource : DEDBentitysource {
     auto pathToId = pathToCollection~"/"~id.toString;
     if (!pathToId.exists) return 0;
 
-    auto jsonPath = pathToId~"/"~to!string(versionNumber);
+    auto jsonPath = pathToId~"/"~to!string(versionNumber)~".json";
     if (jsonPath.exists) {
       jsonPath.remove;
       return (!jsonPath.exists ? 1 : 0); } 
@@ -255,14 +240,14 @@ class DEDBRestentitysource : DEDBentitysource {
 // #endregion DeleteMany
 
 // #region removeOne  
-  alias removeOne = DEDBentitysource.removeOne;
+  alias removeOne = DESCEntitySource.removeOne;
   override bool removeOne(string collection, UUID id, bool allVersions = false) {
     auto pathToCollection = path~"/"~collection;
     if (!pathToCollection.exists) return false;
 
     auto json = findOne(collection, id, allVersions); 
     if (json != Json(null)) {
-      auto jPath = jsonFilePath(pathToCollection, json);
+      auto jPath = filePath(pathToCollection, json);
       jPath.remove;
       return !jPath.exists; }
 
@@ -286,7 +271,7 @@ class DEDBRestentitysource : DEDBentitysource {
 
     auto json = findOne(collection, id, versionNumber); 
     if (json != Json(null)) {
-      auto jPath = jsonFilePath(pathToCollection, json);
+      auto jPath = filePath(pathToCollection, json);
       jPath.remove;
       return !jPath.exists; }
 
@@ -306,7 +291,7 @@ class DEDBRestentitysource : DEDBentitysource {
     
     auto json = findOne(collection, select, allVersions); 
     if (json != Json(null)) {
-      auto jPath = jsonFilePath(pathToCollection, json);
+      auto jPath = filePath(pathToCollection, json);
       jPath.remove;
       return !jPath.exists; }
 
@@ -325,7 +310,7 @@ class DEDBRestentitysource : DEDBentitysource {
 
     auto json = findOne(collection, select, allVersions); 
     if (json != Json(null)) {
-      auto jPath = jsonFilePath(pathToCollection, json);
+      auto jPath = filePath(pathToCollection, json);
       jPath.remove;
       return !jPath.exists; }
 

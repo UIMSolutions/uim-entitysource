@@ -3,14 +3,14 @@ module uim.entitysource.memory;
 @safe:
 import uim.entitysource;
 
-class DEDBMemoryentitysource : DEDBentitysource {
+class DEDBMemoryentitysource : DESCEntitySource {
   this() { super(); }
 
   Json[size_t][UUID][string] _storage;
 
   // #region read
   // Searching in store
-  alias findMany = DEDBentitysource.findMany;
+  alias findMany = DESCEntitySource.findMany;
   override Json[] findMany(string collection, bool allVersions = false) {
     // debug writeln("In findMany(", collection, ",", allVersions, ")");
     
@@ -40,18 +40,6 @@ class DEDBMemoryentitysource : DEDBentitysource {
     return lastVersion != Json(null) ? [lastVersion] : null; }
   unittest {}
 
-  override Json[] findMany(string collection, UUID id, size_t versionNumber) {
-    // debug writeln("In findMany(", collection, ",", versionNumber, ")");
-
-    auto entities = _storage.get("collection", null);
-    if (entities.empty) return null;
-
-    auto versions = entities.get(id, null);
-    if (versions.length == 0) return null;
-
-    return versionNumber in versions ? [versions[versionNumber]] : null; }
-  unittest {}
-
   override Json[] findMany(string collection, STRINGAA select, bool allVersions = false) {
     // debug writeln("In findMany(", collection, ",", allVersions, ")");
     return findMany(collection, allVersions).filter!(a => a.checkVersion(select)).array;
@@ -65,25 +53,22 @@ class DEDBMemoryentitysource : DEDBentitysource {
  }
  unittest {}
 
-  alias findOne = DEDBentitysource.findOne;
+  alias findOne = DESCEntitySource.findOne;
   override Json findOne(string collection, UUID id, bool allVersions = false) {
     // debug writeln("In findOne(", collection, ",", id, ",", allVersions, ")");
     auto jsons = findMany(collection, id, allVersions);
     return jsons.length > 0 ? jsons[0] : Json(null); }
   unittest {
-    writeln((StyledString("Test Json findOne(string collection, UUID id, bool allVersions = false)").setForeground(AnsiColor.black).setBackground(AnsiColor.white)));
-    auto rep = EDBFileentitysource("./tests");
+/*     auto rep = EDBFileSource("./tests");
     auto json = rep.findOne("entities", UUID("0a9f35a0-be1f-4f3f-9d03-97bfba36774d"));
     assert(json != Json(null), "Json not found");
-  }    
+ */  }    
 
   override Json findOne(string collection, UUID id, size_t versionNumber) {
     // debug writeln("In findOne(", collection, ",", id, ",", versionNumber, ")");
-    auto jsons = findMany(collection, id, versionNumber);
-    return jsons.length > 0 ? jsons[0] : Json(null); }
+    return Json(null); }
   unittest {
-    writeln((StyledString("Test Json findOne(string collection, UUID id, size_t versionNumber)").setForeground(AnsiColor.black).setBackground(AnsiColor.white)));
-    auto rep = EDBFileentitysource("./tests");
+    auto rep = EDBFileSource("./tests");
     auto json = rep.findOne("entities", UUID("0a9f35a0-be1f-4f3f-9d03-97bfba36774d"), 1);
     assert(json != Json(null));
   }    
@@ -93,8 +78,7 @@ class DEDBMemoryentitysource : DEDBentitysource {
     auto jsons = findMany(collection, select, allVersions);
     return jsons.length > 0 ? jsons[0] : Json(null); }
   unittest {
-    writeln((StyledString("Test Json findOne(string collection, STRINGAA select, bool allVersions = false)").setForeground(AnsiColor.black).setBackground(AnsiColor.white)));
-    auto rep = EDBFileentitysource("./tests");
+    auto rep = EDBFileSource("./tests");
     auto select = [
       "id": "0a9f35a0-be1f-4f3f-9d03-97bfba36774d", 
       "versionNumber": "1"];
@@ -108,7 +92,7 @@ class DEDBMemoryentitysource : DEDBentitysource {
     return jsons.length > 0 ? jsons[0] : Json(null); }
   unittest {
     // debug writeln((StyledString("Test Json findOne(string collection, Json select, bool allVersions = false)").setForeground(AnsiColor.black).setBackground(AnsiColor.white)));
-    auto rep = EDBFileentitysource("./tests");
+    auto rep = EDBFileSource("./tests");
     auto json = Json.emptyObject;
     json["id"] = "0a9f35a0-be1f-4f3f-9d03-97bfba36774d";
     json["versionNumber"] = 1;
@@ -118,7 +102,7 @@ class DEDBMemoryentitysource : DEDBentitysource {
   // #endregion
 
 // #region create
-  alias insertOne = DEDBentitysource.insertOne;
+  alias insertOne = DESCEntitySource.insertOne;
   override Json insertOne(string collection, Json newData) {
     if (newData == Json(null)) {
       // debug writeln("1: No data");
@@ -144,14 +128,14 @@ class DEDBMemoryentitysource : DEDBentitysource {
   unittest {
     // debug writeln((StyledString("Test Json insertOne(string collection, Json newData)").setForeground(AnsiColor.black).setBackground(AnsiColor.white)));
 
-    auto rep = EDBFileentitysource("./tests");
+    auto rep = EDBFileSource("./tests");
     const json = rep.insertOne("entities", OOPEntity.toJson);
     assert(json != Json(null));
   }
 // #endregion create
 
 // #region UpdateMany
-  alias updateMany = DEDBentitysource.updateMany;
+  alias updateMany = DESCEntitySource.updateMany;
   override size_t updateMany(string collection, Json select, Json updateData) {
     auto entities = _storage.get("collection", null);
     if (entities.empty) return 0;
@@ -172,14 +156,14 @@ class DEDBMemoryentitysource : DEDBentitysource {
     return jsons.length;
   }
 
-  alias updateOne = DEDBentitysource.updateOne;
+  alias updateOne = DESCEntitySource.updateOne;
   override bool updateOne(string collection, Json select, Json updateData) {
     return false; }
  unittest {}
 // #endregion update
 
 // #region removeMany by entity  
-  alias removeMany = DEDBentitysource.removeMany;
+  alias removeMany = DESCEntitySource.removeMany;
   override size_t removeMany(string collection, UUID id, bool allVersions = false) {
     auto entities = _storage.get("collection", null);
     if (entities.empty) return false;
@@ -267,7 +251,7 @@ class DEDBMemoryentitysource : DEDBentitysource {
 // #endregion DeleteMany
 
 // #region removeOne  
-  alias removeOne = DEDBentitysource.removeOne;
+  alias removeOne = DESCEntitySource.removeOne;
   override bool removeOne(string collection, UUID id, bool allVersions = false) {
     // Searching for the version of entity
     auto json = findOne(collection, id, allVersions); 
@@ -281,7 +265,7 @@ class DEDBMemoryentitysource : DEDBentitysource {
   unittest {
     // debug writeln((StyledString("Test bool removeOne(string collection, UUID id, bool allVersions = false)").setForeground(AnsiColor.black).setBackground(AnsiColor.white)));
 
-    auto rep = EDBFileentitysource("./tests");
+    auto rep = EDBFileSource("./tests");
     auto entity = OOPEntity;
     auto json = rep.insertOne("entities", entity);
     assert(rep.removeOne("entities", json));    
@@ -301,7 +285,7 @@ class DEDBMemoryentitysource : DEDBentitysource {
   unittest {
     // debug writeln((StyledString("Test Json insertOne(string collection, Json newData)").setForeground(AnsiColor.black).setBackground(AnsiColor.white)));
 
-    auto rep = EDBFileentitysource("./tests");
+    auto rep = EDBFileSource("./tests");
     auto entity = OOPEntity;
     rep.insertOne("entities", entity);
     assert(rep.removeOne("entities", entity.id, entity.versionNumber));    
@@ -323,7 +307,7 @@ class DEDBMemoryentitysource : DEDBentitysource {
 
     return _storage[collection].get(id, null) == null || _storage[collection][id].get(versionNumber, Json(null)) == Json(null); }
   unittest {
-    auto rep = EDBFileentitysource("./tests");
+    auto rep = EDBFileSource("./tests");
     assert(test_removeOne_collection_select(rep));    
     assert(test_removeOne_collection_select_allVersions(rep));
   }
@@ -344,7 +328,7 @@ class DEDBMemoryentitysource : DEDBentitysource {
 
     return _storage[collection].get(id, null) == null || _storage[collection][id].get(versionNumber, Json(null)) == Json(null); }
   unittest {
-    auto rep = EDBFileentitysource("./tests");
+    auto rep = EDBFileSource("./tests");
     assert(test_removeOne_collection_jsonselect(rep));    
     assert(test_removeOne_collection_jsonselect_allVersions(rep));
   }

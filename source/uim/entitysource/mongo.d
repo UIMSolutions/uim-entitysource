@@ -3,8 +3,8 @@ module uim.entitysource.mongo;
 @safe:
 import uim.entitysource;
 
-class DEDBMongoDb : DEDBentitysource {
-this() { super(); this.separator("/"); }
+class DEDBMongoDb : DESCEntitySource {
+this() { super(); this.separator("."); }
   this(string newPath) { this().path(newPath); }
   
   mixin(SProperty!("string", "path"));
@@ -22,14 +22,14 @@ this() { super(); this.separator("/"); }
   }
   // #region read
   // Searching in store
-  alias findMany = DEDBentitysource.findMany;
+  alias findMany = DESCEntitySource.findMany;
   override Json[] findMany(string collection, bool allVersions = false) {
     Json[] jsons;
     writeln("Looking in "~collection);
     foreach(bson; _client.getCollection(collection).find()) { 
-        auto json = bson.toJson; 
-        json["pool"] = collection;
-        jsons ~= json;
+      auto json = bson.toJson; 
+      json["pool"] = collection;
+      jsons ~= json;
     }
     if (allVersions) return jsons;
 
@@ -51,16 +51,6 @@ this() { super(); this.separator("/"); }
     return findMany(collection, jsnSelect, allVersions); }
   unittest {}
 
-  override Json[] findMany(string collection, UUID id, size_t versionNumber) {
-    // debug writeln("In findMany(", collection, ",", versionNumber, ")");
-
-    Json jsnSelect = Json.emptyObject;
-    jsnSelect["id"] = id.toString;
-    jsnSelect["versionNumber"] = versionNumber;
-
-    return findMany(collection, jsnSelect); }
-  unittest {}
-
   override Json[] findMany(string collection, STRINGAA select, bool allVersions = false) {
     // debug writeln("In findMany(", collection, ",", allVersions, ")");
 
@@ -68,14 +58,11 @@ this() { super(); this.separator("/"); }
     return findMany(collection, selector); }
 
   override Json[] findMany(string collection, Json select, bool allVersions = false) {
-    // debug writeln("In findMany(", collection, ",", allVersions, ")");
+    debug writeln("DEDBMongoDb:findMany(", collection, ",", allVersions, ")");
 
-    auto pathToCollection = path~"/"~collection;
-    if (!pathToCollection.exists) {
-      // debug writeln("In findMany: Missing path: ",pathToCollection);
+    if (allVersions) return _client.getCollection(collection).find(select).map!(a => a.toJson).array; 
       return null;
-    }
-
+/* 
     auto entityIds = dirNames(pathToCollection, true);    
     Json[] results;
     foreach(pathToId; entityIds) {
@@ -85,7 +72,7 @@ this() { super(); this.separator("/"); }
 
     return results.filter!(a => checkVersion(a, select)).array; }
 
-  alias findOne = DEDBentitysource.findOne;
+  alias findOne = DESCEntitySource.findOne;
   override Json findOne(string collection, UUID id, bool allVersions = false) {
     // debug writeln("In findOne(", collection, ",", id, ",", allVersions, ")");
     auto jsons = findMany(collection, id, allVersions);
@@ -94,15 +81,14 @@ this() { super(); this.separator("/"); }
     writeln((StyledString("Test Json findOne(string collection, UUID id, bool allVersions = false)").setForeground(AnsiColor.black).setBackground(AnsiColor.white)));
     auto rep = EDBMongoDb("./tests");
     auto json = rep.findOne("entities", UUID("0a9f35a0-be1f-4f3f-9d03-97bfba36774d"));
-    assert(json != Json(null), "Json not found");
+    assert(json != Json(null), "Json not found"); */
   }    
 
+  alias findOne = DESCEntitySource.findOne;
   override Json findOne(string collection, UUID id, size_t versionNumber) {
     // debug writeln("In findOne(", collection, ",", id, ",", versionNumber, ")");
-    auto jsons = findMany(collection, id, versionNumber);
-    return jsons.length > 0 ? jsons[0] : Json(null); }
+    return Json(null); }
   unittest {
-    writeln((StyledString("Test Json findOne(string collection, UUID id, size_t versionNumber)").setForeground(AnsiColor.black).setBackground(AnsiColor.white)));
     auto rep = EDBMongoDb("./tests");
     auto json = rep.findOne("entities", UUID("0a9f35a0-be1f-4f3f-9d03-97bfba36774d"), 1);
     assert(json != Json(null));
@@ -113,7 +99,6 @@ this() { super(); this.separator("/"); }
     auto jsons = findMany(collection, select, allVersions);
     return jsons.length > 0 ? jsons[0] : Json(null); }
   unittest {
-    writeln((StyledString("Test Json findOne(string collection, STRINGAA select, bool allVersions = false)").setForeground(AnsiColor.black).setBackground(AnsiColor.white)));
     auto rep = EDBMongoDb("./tests");
     auto select = [
       "id": "0a9f35a0-be1f-4f3f-9d03-97bfba36774d", 
@@ -138,7 +123,7 @@ this() { super(); this.separator("/"); }
   // #endregion
 
 // #region create
-  alias insertOne = DEDBentitysource.insertOne;
+  alias insertOne = DESCEntitySource.insertOne;
   override Json insertOne(string collection, Json newData) {
     _client.getCollection(collection).insert(newData);
     return findOne(collection, newData);
@@ -153,7 +138,7 @@ this() { super(); this.separator("/"); }
 // #endregion create
 
 // #region UpdateMany
-  alias updateOne = DEDBentitysource.updateOne;
+  alias updateOne = DESCEntitySource.updateOne;
   override bool updateOne(string collection, Json select, Json updateData) {
     updateData.remove("_id");
     _client.getCollection(collection).update(select, updateData);
@@ -161,7 +146,7 @@ this() { super(); this.separator("/"); }
 // #endregion update
 
 // #region removeOne  
-  alias removeOne = DEDBentitysource.removeOne;
+  alias removeOne = DESCEntitySource.removeOne;
   override bool removeOne(string collection, UUID id, bool allVersions = false) {
     Json select = findOne(collection, id, allVersions);
     _client.getCollection(collection).remove(select);
@@ -185,7 +170,7 @@ this() { super(); this.separator("/"); }
 
     auto json = findOne(collection, id, versionNumber); 
     if (json != Json(null)) {
-      auto jPath = jsonFilePath(pathToCollection, json);
+      auto jPath = filePath(pathToCollection, json);
       jPath.remove;
       return !jPath.exists; }
     return false; }

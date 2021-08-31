@@ -1,15 +1,15 @@
-module uim.entitysource.entitysource;
+module uim.entitysource.source;
 
 @safe:
 import uim.entitysource;
 
-abstract class DEDBentitysource {
+abstract class DESCEntitySource {
   this() { this.separator(":"); }
 
   mixin(SProperty!("string", "separator"));
 
-  DEDBentitysource connect() { return this; }
-  DEDBentitysource cleanupConnections() { return this; }
+  DESCEntitySource connect() { return this; }
+  DESCEntitySource cleanupConnections() { return this; }
 
   string[] collections() { return null; }
   
@@ -116,7 +116,7 @@ abstract class DEDBentitysource {
   size_t count(string[] collections, UUID id, size_t versionNumber) {
     return collections.map!(a => count(a, id, versionNumber)).sum; }
   size_t count(string collection, UUID id, size_t versionNumber) {
-    return findMany(collection, id, versionNumber).length; }
+    return findOne(collection, id, versionNumber) != Json(null) ? 1 : 0; }
 
   // Searching for existing selects
   size_t count(string[] areas, string[] pools, STRINGAA[] selects, bool allVersions = false) {
@@ -184,17 +184,17 @@ abstract class DEDBentitysource {
 
   // Searching based on parameter entity (id & versionNumber)
   size_t count(string[] areas, string[] pools, DOOPEntity entity) {
-    return areas.map!(a => count(a, pools, entity)).sum; }
+    return areas.map!(a => count(a, pools, entity.toJson(["id", "versionNumber"]))).sum; }
   size_t count(string[] areas, string pool, DOOPEntity entity) {
-    return areas.map!(a => count(a, pool, entity)).sum; }
+    return areas.map!(a => count(a, pool, entity.toJson(["id", "versionNumber"]))).sum; }
   size_t count(string area, string[] pools, DOOPEntity entity) {
-    return pools.map!(a => count(area, a, entity)).sum; }
+    return pools.map!(a => count(area, a, entity.toJson(["id", "versionNumber"]))).sum; }
   size_t count(string area, string pool, DOOPEntity entity) {
-    return count(area ~ separator ~ pool, entity); }
+    return count(area ~ separator ~ pool, entity.toJson(["id", "versionNumber"])); }
   size_t count(string[] collections, DOOPEntity entity) {
-    return collections.map!(a => count(a, entity)).sum; }
+    return collections.map!(a => count(a, entity.toJson(["id", "versionNumber"]))).sum; }
   size_t count(string collection, DOOPEntity entity) {
-    return findMany(collection, entity).length; }
+    return findMany(collection, entity.toJson(["id", "versionNumber"])).length; }
   // #endregion
 
 // #region read
@@ -204,6 +204,9 @@ abstract class DEDBentitysource {
 
   Json[] findMany(string[] collections, bool allVersions = false) {
     return collections.map!(a => findMany(a, allVersions)).join; }
+
+  Json[] findMany(string area, string pool, bool allVersions = false) {
+    return findMany(area ~ separator ~ pool, allVersions); }
   Json[] findMany(string collection, bool allVersions = false) {
     return []; }
 
@@ -231,17 +234,17 @@ abstract class DEDBentitysource {
 
   // Searching based on parameter entity (id & versionNumber)
   Json[] findMany(string[] areas, string[] pools, DOOPEntity entity) {
-    return areas.map!(a => findMany(a, pools, entity)).join; }
+    return areas.map!(a => findMany(a, pools, entity.toJson(["id", "versionNumber"]))).join; }
   Json[] findMany(string[] areas, string pool, DOOPEntity entity) {
-    return areas.map!(a => findMany(a, pool, entity)).join; }
+    return areas.map!(a => findMany(a, pool, entity.toJson(["id", "versionNumber"]))).join; }
   Json[] findMany(string area, string[] pools, DOOPEntity entity) {
-    return pools.map!(a => findMany(area, a, entity)).join; }
+    return pools.map!(a => findMany(area, a, entity.toJson(["id", "versionNumber"]))).join; }
   Json[] findMany(string area, string pool, DOOPEntity entity) {
-    return findMany(area ~ separator ~ pool, entity); }
+    return findMany(area ~ separator ~ pool, entity.toJson(["id", "versionNumber"])); }
   Json[] findMany(string[] collections, DOOPEntity entity) {
-    return collections.map!(a => findMany(a, entity)).join; }
+    return collections.map!(a => findMany(a, entity.toJson(["id", "versionNumber"]))).join; }
   Json[] findMany(string collection, DOOPEntity entity) {
-    return findMany(collection, entity.id, entity.versionNumber); }
+    return [findOne(collection, entity.toJson(["id", "versionNumber"]))]; }
 
   // Searching for existing ids
   Json[] findMany(string[] areas, string[] pools, UUID[] ids, bool allVersions = false) {
@@ -277,23 +280,19 @@ abstract class DEDBentitysource {
   Json[] findMany(string area, string[] pools, UUID[] ids, size_t versionNumber) {
     return pools.map!(a => findMany(area, a, ids, versionNumber)).join; }
   Json[] findMany(string area, string pool, UUID[] ids, size_t versionNumber) {
-    return ids.map!(a => findMany(area, pool, a, versionNumber)).join; }
+    return ids.map!(a => findOne(area, pool, a, versionNumber)).array; }
   Json[] findMany(string collection, UUID[] ids, size_t versionNumber) {
-    return ids.map!(a => findMany(collection, a, versionNumber)).join; }
+    return ids.map!(a => findOne(collection, a, versionNumber)).array; }
 
   // Searching for existing id & number
   Json[] findMany(string[] areas, string[] pools, UUID id, size_t versionNumber) {
     return areas.map!(a => findMany(a, pools, id, versionNumber)).join; }
   Json[] findMany(string[] areas, string pool, UUID id, size_t versionNumber) {
-    return areas.map!(a => findMany(a, pool, id, versionNumber)).join; }
+    return areas.map!(a => findOne(a, pool, id, versionNumber)).array; }
   Json[] findMany(string area, string[] pools, UUID id, size_t versionNumber) {
-    return pools.map!(a => findMany(area, a, id, versionNumber)).join; }
-  Json[] findMany(string area, string pool, UUID id, size_t versionNumber) {
-    return findMany(area ~ separator ~ pool, id, versionNumber); }
+    return pools.map!(a => findOne(area, a, id, versionNumber)).array; }
   Json[] findMany(string[] collections, UUID id, size_t versionNumber) {
-    return collections.map!(a => findMany(a, id, versionNumber)).join; }
-  Json[] findMany(string collection, UUID id, size_t versionNumber) {
-    return null; }
+    return collections.map!(a => findOne(a, id, versionNumber)).array; }
 
   // Searching for existing selects
   Json[] findMany(string[] areas, string[] pools, STRINGAA[] selects, bool allVersions = false) {
@@ -390,21 +389,21 @@ abstract class DEDBentitysource {
 
   // Searching based on parameter entity (id & versionNumber)
   Json findOne(string[] areas, string[] pools, DOOPEntity entity) {
-    auto jsons = areas.map!(a => findOne(a, pools, entity)).array; 
+    auto jsons = areas.map!(a => findOne(a, pools, entity.toJson(["id", "versionNumber"]))).array; 
     return jsons.length > 0 ? jsons[0] : Json(null); }
   Json findOne(string[] areas, string pool, DOOPEntity entity) {
-    auto jsons = areas.map!(a => findOne(a, pool, entity)).array; 
+    auto jsons = areas.map!(a => findOne(a, pool, entity.toJson(["id", "versionNumber"]))).array; 
     return jsons.length > 0 ? jsons[0] : Json(null); }
   Json findOne(string area, string[] pools, DOOPEntity entity) {
-    auto jsons = pools.map!(a => findOne(area, a, entity)).array; 
+    auto jsons = pools.map!(a => findOne(area, a, entity.toJson(["id", "versionNumber"]))).array; 
     return jsons.length > 0 ? jsons[0] : Json(null); }
   Json findOne(string area, string pool, DOOPEntity entity) {
-    return findOne(area ~ separator ~ pool, entity); }
+    return findOne(area ~ separator ~ pool, entity.toJson(["id", "versionNumber"])); }
   Json findOne(string[] collections, DOOPEntity entity) {
-    auto jsons = collections.map!(a => findOne(a, entity)).array; 
+    auto jsons = collections.map!(a => findOne(a, entity.toJson(["id", "versionNumber"]))).array; 
     return jsons.length > 0 ? jsons[0] : Json(null); }
   Json findOne(string collection, DOOPEntity entity) {
-    return findOne(collection, entity.id, entity.versionNumber); }
+    return findOne(collection, entity.toJson(["id", "versionNumber"])); }
 
   // Searching for existing ids
   Json findOne(string[] areas, string[] pools, UUID[] ids, bool allVersions = false) {
@@ -551,7 +550,7 @@ abstract class DEDBentitysource {
   Json[] insertMany(string area, string pool, DOOPEntity[] entities) {
     return insertMany(area ~ separator ~ pool, entities); }
   Json[] insertMany(string collection, DOOPEntity[] entities) {
-    return entities.map!(entity => insertOne(collection, entity)).array; }
+    return entities.map!(entity => insertOne(collection, entity.toJson)).array; }
 
   Json[] insertMany(string area, string pool, Json[] jsons) {
     return insertMany(area ~ separator ~ pool, jsons); }
@@ -646,17 +645,17 @@ abstract class DEDBentitysource {
       return entities.map!(a => removeMany(collection, a)).sum; }
 
     size_t removeMany(string[] areas, string[] pools, DOOPEntity entity) {
-      return areas.map!(a => removeMany(a, pools, entity)).sum; }
+      return areas.map!(a => removeMany(a, pools, entity.toJson(["id", "versionNumber"]))).sum; }
     size_t removeMany(string[] areas, string pool, DOOPEntity entity) {
-      return areas.map!(a => removeMany(a, pool, entity)).sum; }
+      return areas.map!(a => removeMany(a, pool, entity.toJson(["id", "versionNumber"]))).sum; }
     size_t removeMany(string area, string[] pools, DOOPEntity entity) {
-      return pools.map!(a => removeMany(area, a, entity)).sum; }
+      return pools.map!(a => removeMany(area, a, entity.toJson(["id", "versionNumber"]))).sum; }
     size_t removeMany(string area, string pool, DOOPEntity entity) {
-      return removeMany(area ~ separator ~ pool, entity); }
+      return removeMany(area ~ separator ~ pool, entity.toJson(["id", "versionNumber"])); }
     size_t removeMany(string[] collections, DOOPEntity entity) {
-      return collections.map!(a => removeMany(a, entity)).sum; }
+      return collections.map!(a => removeMany(a, entity.toJson(["id", "versionNumber"]))).sum; }
     size_t removeMany(string collection, DOOPEntity entity) { 
-      return removeMany(collection, entity.id, entity.versionNumber); }
+      return removeMany(collection, entity.toJson(["id", "versionNumber"])); }
   // #endregion 
 
   // #region Remove by id 
@@ -796,17 +795,17 @@ abstract class DEDBentitysource {
       return entities.map!(a => removeOne(collection, a)).sum > 0; }
 
     bool removeOne(string[] areas, string[] pools, DOOPEntity entity) {
-      return areas.map!(a => removeOne(a, pools, entity)).sum > 0; }
+      return areas.map!(a => removeOne(a, pools, entity.toJson(["id", "versionNumber"]))).sum > 0; }
     bool removeOne(string[] areas, string pool, DOOPEntity entity) {
-      return areas.map!(a => removeOne(a, pool, entity)).sum > 0; }
+      return areas.map!(a => removeOne(a, pool, entity.toJson(["id", "versionNumber"]))).sum > 0; }
     bool removeOne(string area, string[] pools, DOOPEntity entity) {
-      return pools.map!(a => removeOne(area, a, entity)).sum > 0; }
+      return pools.map!(a => removeOne(area, a, entity.toJson(["id", "versionNumber"]))).sum > 0; }
     bool removeOne(string area, string pool, DOOPEntity entity) {
-      return removeOne(area ~ separator ~ pool, entity); }
+      return removeOne(area ~ separator ~ pool, entity.toJson(["id", "versionNumber"])); }
     bool removeOne(string[] collections, DOOPEntity entity) {
-      return collections.map!(a => removeOne(a, entity)).sum > 0; }
+      return collections.map!(a => removeOne(a, entity.toJson(["id", "versionNumber"]))).sum > 0; }
     bool removeOne(string collection, DOOPEntity entity) { 
-      return removeOne(collection, entity.id, entity.versionNumber); }
+      return removeOne(collection, entity.toJson(["id", "versionNumber"])); }
   // #endregion 
 
   // #region Remove by id 

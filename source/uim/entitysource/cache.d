@@ -3,11 +3,11 @@ module uim.entitysource.cache;
 @safe:
 import uim.entitysource;
 
-class DEDBCacheDb : DEDBentitysource {
+class DEDBCacheDb : DESCEntitySource {
   this() { super(); }
-  this(DEDBentitysource myStorage, DEDBentitysource cache) { super(); }
+  this(DESCEntitySource myStorage, DESCEntitySource cache) { super(); }
 
-  mixin(SProperty!("DEDBentitysource", "storage"));
-  mixin(SProperty!("DEDBentitysource", "cache"));
+  mixin(SProperty!("DESCEntitySource", "storage"));
+  mixin(SProperty!("DESCEntitySource", "cache"));
 }
 auto EDBCacheDb() { return new DEDBCacheDb; }

@@ -4,32 +4,40 @@ module uim.entitysource;
 public import uim.core;
 public import uim.oop;
 
-public import colored;
+// public import colored;
 public import vibe.d;
 
 public import uim.entitysource.file;
 public import uim.entitysource.helpers;
 public import uim.entitysource.cache;
-public import uim.entitysource.entitysource;
+public import uim.entitysource.source;
 public import uim.entitysource.memory;
 public import uim.entitysource.mongo;
 public import uim.entitysource.tests;
 
-string jsonFilePath(Json json, string sep = "/") {
+
+string filePath(Json json, string sep = "/", string extension = ".json") {
   if (json == Json(null)) return "";
+ 
+  if ("id" in json && "versionNumber" in json) return json["id"].get!string~sep~"1"~extension;
 
-  // debug writeln("2 Path: ",json["id"].get!string~sep~to!string(json["versionNumber"].get!size_t));
-  return ("id" in json) && ("versionNumber" in json) ? 
-    json["id"].get!string~sep~to!string(json["versionNumber"].get!size_t) : "";
+  return ("id" in json) ? 
+    json["id"].get!string~sep~to!string(json["versionNumber"].get!size_t)~".json" : "";
 }
 
-string jsonFilePath(string startPath, Json json, string sep = "/") {
-  if (auto jPath = jsonFilePath(json, sep)) {
-    // debug writeln("2 Path: ", startPath~sep~jPath);
-    return startPath~sep~jPath;
-  }
-  return "";
-}
+/* string jsonFilePath(Json json, string sep = "/") {
+  if (json == Json(null)) return "";
+ 
+  if ("id" in json && "versionNumber" in json) return json["id"].get!string~sep~"1.json";
+
+  return ("id" in json) ? 
+    json["id"].get!string~sep~to!string(json["versionNumber"].get!size_t)~".json" : "";
+} */
+
+/* string jsonFilePath(string startPath, Json json, string sep = "/") {
+  if (json == Json(null)) return "";
+  return startPath~sep~jsonFilePath(json, sep);
+} */
 
 // #region check
   bool checkVersion(_VERSION value, string[] keys = null) {
@@ -106,3 +114,61 @@ string jsonFilePath(string startPath, Json json, string sep = "/") {
     return (key in entity) && (entity[key].get!T == value);
   }
 // #endregion check
+
+Json toJson(UUID id, size_t versionNumber = 0) {
+  auto result = Json.emptyObject;
+
+  result["id"] = id.toString;
+  result["versionNumber"] = versionNumber > 0 ? versionNumber : 1;
+
+  return result; 
+}
+
+/* Json toJson(STRINGAA values) {
+  auto result = Json.emptyObject;
+
+  if ("id" in values) result["id"] = values["id"];
+  result["versionNumber"] = "versionNumber" in values ? to!size_t(values["versionNumber"]) : 1;
+
+  return result; 
+} */
+
+string dirPath(string path, UUID id, string separator = "/") {
+  return path~dirPath(id, separator);
+}
+string dirPath(UUID id, string separator = "/") {
+  return separator~id.toString;
+}
+
+string dirPath(string path, Json json, string separator = "/") {
+  if (json == Json(null)) return "";
+  if ("id" !in json) return "";
+
+  return path~dirPath(json, separator);
+}
+string dirPath(Json json, string separator = "/") {
+  if (json == Json(null)) return "";
+  if ("id" !in json) return "";
+
+  return separator~json["id"].get!string;
+}
+
+string filePath(string path, UUID id, size_t versionNumber, string separator = "/") {
+  return path~filePath(id, versionNumber, separator);
+}
+string filePath(UUID id, size_t versionNumber, string separator = "/") {
+  return dirPath(id, separator)~separator~toString(versionNumber > 0 ? versionNumber : 1)~".json";
+}
+string filePath(string path, Json json, string separator = "/") {
+  if (json == Json(null)) return "";
+  if ("id" !in json) return "";
+
+  return path~filePath(json, separator);
+}
+string filePath(Json json, string separator = "/") {
+  if (json == Json(null)) return "";
+  if ("id" !in json) return "";
+
+  return dirPath(json, separator)~separator~("versionNumber" in json ? 
+    to!string(json["versionNumber"].get!long > 0 ? json["versionNumber"].get!long : 1) : "1")~".json";
+}
