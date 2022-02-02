@@ -22,15 +22,15 @@ abstract class DESCEntitySource {
     return result;
   }
 
-  bool has(_VERSION entity, UUID id) {
+  bool has(Json entity, UUID id) {
     return "id" in entity ? entity["id"].get!string == id.toString : false; }
   unittest {}
 
-  bool has(_VERSION entity, string name) {
+  bool has(Json entity, string name) {
     return "name" in entity ? entity["name"].get!string == name : false; }
   unittest {}
 
-  bool has(_VERSION entity, size_t verNumber = 0) {
+  bool has(Json entity, size_t verNumber = 0) {
     return (verNumber == 0) && (versionNumber(entity) == verNumber);
   }
   unittest {}

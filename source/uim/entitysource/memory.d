@@ -20,7 +20,7 @@ class DEDBMemoryentitysource : DESCEntitySource {
     Json[] results;
     foreach(versions; entities.byValue) {
       if (allVersions) results ~= versions.byValue.array;
-      else results ~= uim.oop.repositories.lastVersion(versions);
+      else results ~= uim.entities.repositories.lastVersion(versions);
     }
     return results; }
   unittest {}
@@ -36,7 +36,7 @@ class DEDBMemoryentitysource : DESCEntitySource {
 
   
     if (allVersions) return versions.byKeyValue.map!(a => a.value).array;
-    auto lastVersion = uim.oop.repositories.lastVersion(versions);
+    auto lastVersion = uim.entities.repositories.lastVersion(versions);
     return lastVersion != Json(null) ? [lastVersion] : null; }
   unittest {}
 
@@ -68,9 +68,9 @@ class DEDBMemoryentitysource : DESCEntitySource {
     // debug writeln("In findOne(", collection, ",", id, ",", versionNumber, ")");
     return Json(null); }
   unittest {
-    auto rep = EDBFileSource("./tests");
+/*     auto rep = EDBFileSource("./tests");
     auto json = rep.findOne("entities", UUID("0a9f35a0-be1f-4f3f-9d03-97bfba36774d"), 1);
-    assert(json != Json(null));
+    assert(json != Json(null)); */
   }    
 
   override Json findOne(string collection, STRINGAA select, bool allVersions = false) {
@@ -78,12 +78,12 @@ class DEDBMemoryentitysource : DESCEntitySource {
     auto jsons = findMany(collection, select, allVersions);
     return jsons.length > 0 ? jsons[0] : Json(null); }
   unittest {
-    auto rep = EDBFileSource("./tests");
+/*     auto rep = EDBFileSource("./tests");
     auto select = [
       "id": "0a9f35a0-be1f-4f3f-9d03-97bfba36774d", 
       "versionNumber": "1"];
     auto json = rep.findOne("entities", select);
-    assert(json != Json(null), "json not found");
+    assert(json != Json(null), "json not found"); */
   }    
 
   override Json findOne(string collection, Json select, bool allVersions = false) {
@@ -92,12 +92,12 @@ class DEDBMemoryentitysource : DESCEntitySource {
     return jsons.length > 0 ? jsons[0] : Json(null); }
   unittest {
     // debug writeln((StyledString("Test Json findOne(string collection, Json select, bool allVersions = false)").setForeground(AnsiColor.black).setBackground(AnsiColor.white)));
-    auto rep = EDBFileSource("./tests");
+/*     auto rep = EDBFileSource("./tests");
     auto json = Json.emptyObject;
     json["id"] = "0a9f35a0-be1f-4f3f-9d03-97bfba36774d";
     json["versionNumber"] = 1;
     json = rep.findOne("entities", json);
-    assert(json != Json(null));
+    assert(json != Json(null)); */
   }    
   // #endregion
 

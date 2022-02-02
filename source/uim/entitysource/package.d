@@ -7,6 +7,8 @@ public import uim.oop;
 // public import colored;
 public import vibe.d;
 
+public import uim.entities;
+
 public import uim.entitysource.file;
 public import uim.entitysource.helpers;
 public import uim.entitysource.cache;
@@ -55,11 +57,14 @@ string filePath(Json json, string sep = "/", string extension = ".json") {
   }
 
   bool checkVersion(_VERSION value, STRINGAA selector) {
+    debug writeln("bool checkVersion(_VERSION value, STRINGAA selector)");
     if (!checkVersion(value)) return false; // Testing against null results in false
     if (selector.empty) return false; // Testing against null results in false
 
     foreach (key; selector.byKey) {      
+      debug writeln("-> "~key~"/"~selector[key]);
       if (key !in value) return false;
+      debug writeln("-> %s : %s".format(value[key].type, value[key]));
       switch (value[key].type) {
         case Json.Type.string:
           if (value[key].get!string != selector[key]) return false;

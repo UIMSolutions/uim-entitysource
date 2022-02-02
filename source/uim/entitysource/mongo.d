@@ -39,7 +39,7 @@ this() { super(); this.separator("."); }
       if (id !in aggs) aggs[id] = [json];
       else aggs[id] ~= [json];
     }
-    return aggs.byKey().map!(a => uim.oop.repositories.lastVersion(aggs[a])).array; }
+    return aggs.byKey().map!(a => uim.entities.repositories.lastVersion(aggs[a])).array; }
   unittest {}
 
   override Json[] findMany(string collection, UUID id, bool allVersions = false) {
@@ -68,7 +68,7 @@ this() { super(); this.separator("."); }
     foreach(pathToId; entityIds) {
       auto allEntityVersions = loadJsonsFromDirectory(pathToId);
       if (allVersions) results ~= allEntityVersions;
-      else results ~= uim.oop.repositories.lastVersion(allEntityVersions); }
+      else results ~= uim.entities.repositories.lastVersion(allEntityVersions); }
 
     return results.filter!(a => checkVersion(a, select)).array; }
 
@@ -89,9 +89,9 @@ this() { super(); this.separator("."); }
     // debug writeln("In findOne(", collection, ",", id, ",", versionNumber, ")");
     return Json(null); }
   unittest {
-    auto rep = EDBMongoDb("./tests");
+/*     auto rep = EDBMongoDb("./tests");
     auto json = rep.findOne("entities", UUID("0a9f35a0-be1f-4f3f-9d03-97bfba36774d"), 1);
-    assert(json != Json(null));
+    assert(json != Json(null)); */
   }    
 
   override Json findOne(string collection, STRINGAA select, bool allVersions = false) {
@@ -99,12 +99,12 @@ this() { super(); this.separator("."); }
     auto jsons = findMany(collection, select, allVersions);
     return jsons.length > 0 ? jsons[0] : Json(null); }
   unittest {
-    auto rep = EDBMongoDb("./tests");
+/*     auto rep = EDBMongoDb("./tests");
     auto select = [
       "id": "0a9f35a0-be1f-4f3f-9d03-97bfba36774d", 
       "versionNumber": "1"];
     auto json = rep.findOne("entities", select);
-    assert(json != Json(null), "json not found");
+    assert(json != Json(null), "json not found"); */
   }    
 
   override Json findOne(string collection, Json select, bool allVersions = false) {
@@ -113,12 +113,12 @@ this() { super(); this.separator("."); }
     return jsons.length > 0 ? jsons[0] : Json(null); }
   unittest {
     // debug writeln((StyledString("Test Json findOne(string collection, Json select, bool allVersions = false)").setForeground(AnsiColor.black).setBackground(AnsiColor.white)));
-    auto rep = EDBMongoDb("./tests");
+/*     auto rep = EDBMongoDb("./tests");
     auto json = Json.emptyObject;
     json["id"] = "0a9f35a0-be1f-4f3f-9d03-97bfba36774d";
     json["versionNumber"] = 1;
     json = rep.findOne("entities", json);
-    assert(json != Json(null));
+    assert(json != Json(null)); */
   }    
   // #endregion
 
