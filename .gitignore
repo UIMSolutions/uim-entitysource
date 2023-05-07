@@ -13,3 +13,4 @@ uim-entitydb-test-*
 *.o
 *.obj
 *.lst
+libuim-entitysource.a
