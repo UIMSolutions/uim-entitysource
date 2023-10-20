@@ -166,7 +166,7 @@ this() { super(); this.separator("."); }
 
   override bool removeOne(string collection, UUID id, size_t versionNumber) {
     auto pathToCollection = path~"/"~collection;
-    if (!pathToCollection.exists) return false;
+    if (!pathToCollection.exists) { return false; }
 
     auto json = findOne(collection, id, versionNumber); 
     if (json != Json(null)) {
@@ -181,7 +181,7 @@ this() { super(); this.separator("."); }
 
   override bool removeOne(string collection, Json select, bool allVersions = false) {    
     _client.getCollection(collection).remove(select);
-    return findOne(collection, select, allVersions) == Json(null); }
+    return findOne(collection, select, allVersions).isEmpty; }
   unittest {
     auto rep = EDBMongoDb("./tests");
     assert(test_removeOne_collection_jsonselect(rep));    

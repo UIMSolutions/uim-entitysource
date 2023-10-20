@@ -181,7 +181,7 @@ class DEDBFileSource : DESCEntitySource {
 // #region create
   alias insertOne = DESCEntitySource.insertOne;
   override Json insertOne(string collection, Json newData) {
-    if (newData == Json(null)) {
+    if (newData.isEmpty) {
       debug writeln("No data");
       return Json(null);
     }
@@ -227,11 +227,10 @@ class DEDBFileSource : DESCEntitySource {
 
     auto jsons = findMany(collection, select); 
     foreach(json; jsons) {
-      foreach(kv; updateData.byKeyValue) {
-        if (kv.key == "id") continue;
-        if (kv.key == "versionNumber") continue;
-
-        json[kv.key] = kv.value; }
+      updateData.byKeyValue
+        .filter!(kv => kv.key != "id"  && kv.key == "versionNumber")
+        .each!(kv => json[kv.key] = kv.value);
+      
       std.file.write(filePath(pathToCollection, json, separator), json.toString);
     }
     return jsons.length;
@@ -240,11 +239,12 @@ class DEDBFileSource : DESCEntitySource {
   alias updateOne = DESCEntitySource.updateOne;
   override bool updateOne(string collection, Json select, Json updateData) {
     debug writeln("DEDBFileSource:updateOne(string collection, Json select, Json updateData)");
+
     auto pathToCollection = path~separator~collection;
-    if (!pathToCollection.exists) return false;
+    if (!pathToCollection.exists) { return false; }
 
     auto json = findOne(collection, select);
-    if (json == Json(null)) return false;
+    if (json.isEmpty) { return false; }
 
     foreach(kv; updateData.byKeyValue) json[kv.key] = kv.value;  
     std.file.write(filePath(pathToCollection, json, separator), json.toString);
@@ -304,7 +304,7 @@ class DEDBFileSource : DESCEntitySource {
     // debug writeln(StyledString("DEDBFileSource:removeOne(collection, id, allVersions)").setForeground(AnsiColor.black).setBackground(AnsiColor.white));
 
     auto pathToCollection = path~separator~collection;
-    if (!pathToCollection.exists) return false;
+    if (!pathToCollection.exists) { return false; }
 
     auto json = findOne(collection, id, allVersions); 
     if (json != Json(null)) {
@@ -331,13 +331,13 @@ class DEDBFileSource : DESCEntitySource {
     // debug writeln(StyledString("DEDBFileSource:removeOne(collection, id, versionNumber)").setForeground(AnsiColor.black).setBackground(AnsiColor.white));
 
     auto pathToCollection = path~separator~collection;
-    if (!pathToCollection.exists) return false;
+    if (!pathToCollection.exists) { return false; }
 
     auto pathToId = dirPath(pathToCollection, id, separator);
-    if (!pathToId.exists) return false;
+    if (!pathToId.exists) { return false; }
 
     auto pathToVersion = filePath(pathToCollection, id, versionNumber, separator);
-    if (!pathToId.exists) return false;
+    if (!pathToId.exists) { return false; }
 
     pathToVersion.remove;
     if (fileNames(pathToId, true).empty) pathToId.remove;
@@ -355,17 +355,17 @@ class DEDBFileSource : DESCEntitySource {
     // debug writeln(StyledString("DEDBFileSource:removeOne(collection, select, allVersions)").setForeground(AnsiColor.black).setBackground(AnsiColor.white));
 
     auto pathToCollection = path~separator~collection;
-    if (!pathToCollection.exists) return false;
+    if (!pathToCollection.exists) { return false; }
 
     if ("id" in select) {
       auto id = UUID(select["id"]);
       auto pathToId = dirPath(pathToCollection, id, separator);
-      if (!pathToId.exists) return false;
+      if (!pathToId.exists) { return false; }
 
       if ("versionNumber" in select) {
         auto versionNumber = to!size_t(select["versionNumber"]);
         auto pathToVersion = filePath(pathToCollection, id, versionNumber, separator);
-        if (!pathToId.exists) return false;
+        if (!pathToId.exists) { return false; }
 
         pathToVersion.remove;
         if (fileNames(pathToId, true).empty) pathToId.remove;
@@ -385,17 +385,17 @@ class DEDBFileSource : DESCEntitySource {
     // debug writeln(StyledString("DEDBFileSource:removeOne(collection, select, allVersions)").setForeground(AnsiColor.black).setBackground(AnsiColor.white));
 
     auto pathToCollection = path~separator~collection;
-    if (!pathToCollection.exists) return false;
+    if (!pathToCollection.exists) { return false; }
 
     if ("id" in select) {
       auto id = UUID(select["id"].get!string);
       auto pathToId = dirPath(pathToCollection, id, separator);
-      if (!pathToId.exists) return false;
+      if (!pathToId.exists) { return false; }
 
       if ("versionNumber" in select) {
         auto versionNumber = select["versionNumber"].get!size_t;
         auto pathToVersion = filePath(pathToCollection, id, versionNumber, separator);
-        if (!pathToVersion.exists) return false;
+        if (!pathToVersion.exists) { return false; }
 
         pathToVersion.remove;
         if (fileNames(pathToId, true).empty) pathToId.remove;

@@ -104,7 +104,7 @@ class DEDBMemoryentitysource : DESCEntitySource {
 // #region create
   alias insertOne = DESCEntitySource.insertOne;
   override Json insertOne(string collection, Json newData) {
-    if (newData == Json(null)) {
+    if (newData.isEmpty) {
       // debug writeln("1: No data");
       return Json(null);
     }
@@ -166,10 +166,10 @@ class DEDBMemoryentitysource : DESCEntitySource {
   alias removeMany = DESCEntitySource.removeMany;
   override size_t removeMany(string collection, UUID id, bool allVersions = false) {
     auto entities = _storage.get("collection", null);
-    if (entities.empty) return false;
+    if (entities.empty) { return false; }
 
     auto entity = entities.get(id, null);
-    if (entity.empty) return false; 
+    if (entity.empty) { return false; } 
 
     if (allVersions) {
       auto result = entity.length;
@@ -184,10 +184,10 @@ class DEDBMemoryentitysource : DESCEntitySource {
 
   override size_t removeMany(string collection, UUID id, size_t versionNumber) {
     auto entities = _storage.get("collection", null);
-    if (entities.empty) return false;
+    if (entities.empty) { return false; }
 
     auto entity = entities.get(id, null);
-    if (entity.empty) return false; 
+    if (entity.empty) { return false; } 
 
     if (versionNumber in entity) {
       entity.remove(versionNumber);
@@ -199,7 +199,7 @@ class DEDBMemoryentitysource : DESCEntitySource {
 
   override size_t removeMany(string collection, STRINGAA select, bool allVersions = false) {
     auto entities = _storage.get("collection", null);
-    if (entities.empty) return false;
+    if (entities.empty) { return false; }
 
     size_t result;
     foreach(id, versions; entities) {
@@ -225,7 +225,7 @@ class DEDBMemoryentitysource : DESCEntitySource {
 
   override size_t removeMany(string collection, Json select, bool allVersions = false) {
     auto entities = _storage.get("collection", null);
-    if (entities.empty) return false;
+    if (entities.empty) { return false; }
 
     size_t result;
     foreach(id, versions; entities) {
@@ -259,7 +259,7 @@ class DEDBMemoryentitysource : DESCEntitySource {
       auto vNumber = json["versionNumber"].get!size_t;
       _storage[collection][id].remove(vNumber);
       if (_storage[collection][id].empty) _storage[collection].remove(id);
-      return _storage[collection].get(id, null) == null || _storage[collection][id].get(vNumber, Json(null)) == Json(null); }
+      return _storage[collection].get(id, null) == null || _storage[collection][id].get(vNumber, Json(null)).isEmpty; }
 
     return false; } 
   unittest {
@@ -277,11 +277,11 @@ class DEDBMemoryentitysource : DESCEntitySource {
 
   override bool removeOne(string collection, UUID id, size_t versionNumber) {
     auto json = findOne(collection, id, versionNumber); 
-    if (json == Json(null)) return false;
+    if (json.isEmpty) { return false; }
 
     _storage[collection][id].remove(versionNumber);
     if (_storage[collection][id].empty) _storage[collection].remove(id);
-    return _storage[collection].get(id, null) == null || _storage[collection][id].get(versionNumber, Json(null)) == Json(null); }
+    return _storage[collection].get(id, null) == null || _storage[collection][id].get(versionNumber, Json(null)).isEmpty; }
   unittest {
     // debug writeln((StyledString("Test Json insertOne(string collection, Json newData)").setForeground(AnsiColor.black).setBackground(AnsiColor.white)));
 
@@ -293,19 +293,19 @@ class DEDBMemoryentitysource : DESCEntitySource {
 
   override bool removeOne(string collection, STRINGAA select, bool allVersions = false) {
     auto entities = _storage.get("collection", null);
-    if (entities.empty) return false;
+    if (entities.empty) { return false; }
     
     auto json = findOne(collection, select, allVersions); 
-    if (json == Json(null)) return false;
+    if (json.isEmpty) { return false; }
 
     UUID id = UUID(json["id"].get!string);      
     size_t versionNumber = json["versionNumber"].get!size_t;      
 
-    if (id !in entities) return false;
-    if (versionNumber !in entities[id]) return false;
+    if (id !in entities) { return false; }
+    if (versionNumber !in entities[id]) { return false; }
     entities[id].remove(versionNumber);
 
-    return _storage[collection].get(id, null) == null || _storage[collection][id].get(versionNumber, Json(null)) == Json(null); }
+    return _storage[collection].get(id, null) == null || _storage[collection][id].get(versionNumber, Json(null)).isEmpty; }
   unittest {
     auto rep = EDBFileSource("./tests");
     assert(test_removeOne_collection_select(rep));    
@@ -314,19 +314,19 @@ class DEDBMemoryentitysource : DESCEntitySource {
 
   override bool removeOne(string collection, Json select, bool allVersions = false) {
     auto entities = _storage.get("collection", null);
-    if (entities.empty) return false;
+    if (entities.empty) { return false; }
 
     auto json = findOne(collection, select, allVersions); 
-    if (json == Json(null)) return false;
+    if (json.isEmpty) { return false; }
 
     UUID id = UUID(json["id"].get!string);      
     size_t versionNumber = json["versionNumber"].get!size_t;      
 
-    if (id !in entities) return false;
-    if (versionNumber !in entities[id]) return false;
+    if (id !in entities) { return false; }
+    if (versionNumber !in entities[id]) { return false; }
     entities[id].remove(versionNumber);
 
-    return _storage[collection].get(id, null) == null || _storage[collection][id].get(versionNumber, Json(null)) == Json(null); }
+    return _storage[collection].get(id, null) == null || _storage[collection][id].get(versionNumber, Json(null)).isEmpty; }
   unittest {
     auto rep = EDBFileSource("./tests");
     assert(test_removeOne_collection_jsonselect(rep));    

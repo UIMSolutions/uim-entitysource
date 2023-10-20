@@ -133,7 +133,7 @@ class DEDBRestentitysource : DESCEntitySource {
 // #region create
   alias insertOne = DESCEntitySource.insertOne;
   override Json insertOne(string collection, Json newData) {
-    if (newData == Json(null)) {
+    if (newData.isEmpty) {
       // debug writeln("1: No data");
       return Json(null);
     }
@@ -243,7 +243,7 @@ class DEDBRestentitysource : DESCEntitySource {
   alias removeOne = DESCEntitySource.removeOne;
   override bool removeOne(string collection, UUID id, bool allVersions = false) {
     auto pathToCollection = path~"/"~collection;
-    if (!pathToCollection.exists) return false;
+    if (!pathToCollection.exists) { return false; }
 
     auto json = findOne(collection, id, allVersions); 
     if (json != Json(null)) {
@@ -267,7 +267,7 @@ class DEDBRestentitysource : DESCEntitySource {
 
   override bool removeOne(string collection, UUID id, size_t versionNumber) {
     auto pathToCollection = path~"/"~collection;
-    if (!pathToCollection.exists) return false;
+    if (!pathToCollection.exists) { return false; }
 
     auto json = findOne(collection, id, versionNumber); 
     if (json != Json(null)) {
@@ -287,7 +287,7 @@ class DEDBRestentitysource : DESCEntitySource {
 
   override bool removeOne(string collection, STRINGAA select, bool allVersions = false) {
     auto pathToCollection = path~"/"~collection;
-    if (!pathToCollection.exists) return false;
+    if (!pathToCollection.exists) { return false; }
     
     auto json = findOne(collection, select, allVersions); 
     if (json != Json(null)) {
@@ -306,7 +306,7 @@ class DEDBRestentitysource : DESCEntitySource {
 
   override bool removeOne(string collection, Json select, bool allVersions = false) {
     auto pathToCollection = path~"/"~collection;
-    if (!pathToCollection.exists) return false;
+    if (!pathToCollection.exists) { return false; }
 
     auto json = findOne(collection, select, allVersions); 
     if (json != Json(null)) {
