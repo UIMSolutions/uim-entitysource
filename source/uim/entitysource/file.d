@@ -61,44 +61,44 @@ class DEDBFileSource : DESCEntitySource {
     Json[] results;
     foreach(pathToId; entityIds) {
       auto allEntityVersions = loadJsonsFromDirectory(pathToId);
-      if (allVersions) results ~= allEntityVersions;
-      else results ~= uim.entities.repositories.lastVersion(allEntityVersions);
+      results ~= (allVersions 
+        ? allEntityVersions
+        : uim.entities.repositories.lastVersion(allEntityVersions));
     }
-    debug writeln("-> Found entries: ", results.length);
-    return results.filter!(a => checkVersion(a, select)).array; }
+
+    return results
+      .filter!(a => checkVersion(a, select))
+      .array; 
+  }
 
   override Json[] findMany(string collection, Json select, bool allVersions = false) {
     debug writeln("In findMany(", collection, ",", allVersions, ")");
 
     auto pathToCollection = path~separator~collection;
-    if (!pathToCollection.exists) {
-      debug writeln("-> Missing collection: ", pathToCollection);
-      return null; }
+    if (!pathToCollection.exists) { return null; }
 
     auto entityIds = dirNames(pathToCollection, true);    
     Json[] results;
     foreach(pathToId; entityIds) {
       auto allEntityVersions = loadJsonsFromDirectory(pathToId);
-      if (allVersions) results ~= allEntityVersions;
-      else results ~= uim.entities.repositories.lastVersion(allEntityVersions); }
+      results ~= (allVersions 
+        ? allEntityVersions;
+        : uim.entities.repositories.lastVersion(allEntityVersions)); 
 
-    return results.filter!(a => checkVersion(a, select)).array; }
+    return results.filter!(a => checkVersion(a, select)).array; 
+  }
 
   alias findOne = DESCEntitySource.findOne;
   override Json findOne(string collection, UUID id, bool allVersions = false) {
     debug writeln("In findOne(", collection, ",", id, ",", allVersions, ")");
     auto pathToCollection = path~separator~collection;
-    if (!pathToCollection.exists) {
-      debug writeln("In findMany: Missing collection: ", pathToCollection);
-      return Json(null); }
+    if (!pathToCollection.exists) { Json(null); }
 
     auto pathToId = dirPath(pathToCollection, id, separator);
-    if (!pathToId.exists) {
-      debug writeln("In findMany: Missing id: ", pathToId);
-      return Json(null); }
+    if (!pathToId.exists) { Json(null); }
 
     auto allEntityVersions = loadJsonsFromDirectory(pathToId);
-    if (allEntityVersions.empty) return Json(null); 
+    if (allEntityVersions.empty) { return Json(null) }; 
     
     if (allVersions) return allEntityVersions[0];
     else return uim.entities.repositories.lastVersion(allEntityVersions); }
@@ -112,19 +112,13 @@ class DEDBFileSource : DESCEntitySource {
     debug writeln("DEDBFileSource:findOne(", collection, ",", id, ",", versionNumber, ")");
 
     auto pathToCollection = path~separator~collection;
-    if (!pathToCollection.exists) {
-      debug writeln("In findMany: Missing collection: ", pathToCollection);
-      return Json(null); }
+    if (!pathToCollection.exists) { return Json(null); }
 
     auto pathToId = dirPath(pathToCollection, id, separator);
-    if (!pathToId.exists) {
-      debug writeln("In findMany: Missing id: ", pathToId);
-      return Json(null); }
+    if (!pathToId.exists) { return Json(null); }
 
     auto pathToVersion = filePath(pathToCollection, toJson(id, versionNumber), separator);
-    if (!pathToVersion.exists) {
-      debug writeln("In findMany: Missing version: ", pathToVersion);
-      return Json(null); }
+    if (!pathToVersion.exists) { return Json(null); }
 
     return loadJson(pathToVersion); }
   unittest {
@@ -135,16 +129,17 @@ class DEDBFileSource : DESCEntitySource {
   override Json findOne(string collection, STRINGAA select, bool allVersions = false) {
     debug writeln("In findOne(", collection, ",", select, ",", allVersions, ")");
     auto pathToCollection = path~separator~collection;
-    if (!pathToCollection.exists) {
-      debug writeln("-> Missing collection: ", pathToCollection);
-      return Json(null); }
+    if (!pathToCollection.exists) { return Json(null); }
     
-    if ("id" in select && "versionNumber" !in select) return findOne(collection, UUID(select["id"]), allVersions);
+    if ("id" in select) {
+      return "versionNumber" !in select) return findOne(collection, UUID(select["id"]), allVersions);
     if ("id" in select && "versionNumber" in select) return findOne(collection, UUID(select["id"]), to!size_t(select["versionNumber"]));
 
     auto jsons = findMany(collection, select, allVersions);
     debug writeln("-> Found jsons: ", jsons.length);
-    return jsons.length > 0 ? jsons[0] : Json(null); }
+
+    return jsons.isEmpty ? Json(null) : jsons[0]; 
+  }
   unittest {
 /*     auto ds = EDBFileSource("./tests");
     auto select = [

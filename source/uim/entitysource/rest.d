@@ -174,12 +174,10 @@ class DEDBRestentitysource : DESCEntitySource {
 
     auto jsons = findMany(collection, select); 
     foreach(json; jsons) {
-      foreach(kv; updateData.byKeyValue) {
-        if (kv.key == "id") continue;
-        if (kv.key == "versionNumber") continue;
+      updateData.byKeyValue
+        .filter!(kv => (kv.key != "id" && kv.key != "versionNumber")
+        .each!(kv => json[kv.key] = kv.value);
 
-        json[kv.key] = kv.value;
-      }
       std.file.write(filePath(pathToCollection, json, separator), json.toString);
     }
     return jsons.length;
@@ -193,7 +191,10 @@ class DEDBRestentitysource : DESCEntitySource {
 // #region removeMany by entity  
   alias removeMany = DESCEntitySource.removeMany;
   override size_t removeMany(string collection, UUID id, bool allVersions = false) {
-    auto pathToCollection = path~"/"~collection;
+    // Preconditions
+    if (collection.isEmpty && id.isNull) { return 0; }
+
+    auto pathToCollection = path~"/"~collection;    
     if (!pathToCollection.exists) return 0;
 
     auto pathToId = pathToCollection~"/"~id.toString;
@@ -213,6 +214,9 @@ class DEDBRestentitysource : DESCEntitySource {
     }
 
   override size_t removeMany(string collection, UUID id, size_t versionNumber) {
+    // Preconditions
+    if (collection.isEmpty && id.isNull) { return 0; }
+
     auto pathToCollection = path~"/"~collection;
     if (!pathToCollection.exists) return 0;
 
@@ -266,16 +270,19 @@ class DEDBRestentitysource : DESCEntitySource {
   }
 
   override bool removeOne(string collection, UUID id, size_t versionNumber) {
+    // Preconditions
+    if (collection.isEmpty && id.isNull) { return 0; }
+
     auto pathToCollection = path~"/"~collection;
     if (!pathToCollection.exists) { return false; }
 
     auto json = findOne(collection, id, versionNumber); 
-    if (json != Json(null)) {
-      auto jPath = filePath(pathToCollection, json);
-      jPath.remove;
-      return !jPath.exists; }
+    if (json.isEmpty) { return false; }
 
-    return false; }
+    auto jPath = filePath(pathToCollection, json);
+    jPath.remove;
+    return !jPath.exists; 
+  }
   unittest {
     // debug writeln((StyledString("Test Json insertOne(string collection, Json newData)").setForeground(AnsiColor.black).setBackground(AnsiColor.white)));
 
